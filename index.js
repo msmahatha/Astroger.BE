@@ -16,7 +16,7 @@ const PORT = process.env.PORT || 5000;
 
 // CORS configuration - MUST be first middleware
 const corsOptions = {
-  origin: "https://astrolozee-frontend.vercel.app",
+  origin: "https://astrolozee.com",
   credentials: true,
   methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"],
