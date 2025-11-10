@@ -28,7 +28,8 @@ const corsOptions = {
   origin: [
     "https://astrolozee.com", 
     "http://localhost:5173", // Add this
-    "http://localhost:3000"
+    "http://localhost:3000",
+    "https://demoastroclient.vercel.app"
   ],
   credentials: true,
   methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
