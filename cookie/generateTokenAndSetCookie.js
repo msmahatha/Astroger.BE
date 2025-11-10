@@ -5,10 +5,12 @@ export const generateTokenAndSetCookie = (userId, res) => {
     expiresIn: '15d'
   });
 
+  const isProduction = process.env.NODE_ENV === 'production';
+  
   res.cookie("jwt", token, {
     httpOnly: true,
-    secure: true, // Required for HTTPS on Vercel
-    sameSite: "none", // Changed from "Strict" to "lax" for cross-site requests
+    secure: isProduction, // Only use secure in production
+    sameSite: isProduction ? "none" : "lax", // Use "none" in production, "lax" in development
     maxAge: 15 * 24 * 60 * 60 * 1000,
     path: "/" // Ensure cookie is available on all routes
   });

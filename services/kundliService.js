@@ -2,9 +2,10 @@ import axios from 'axios';
 
 class KundliService {
   constructor() {
-    this.baseURL = process.env.ASTRO_API_URL || 'https://astrolozee.onrender.com';
+    // Prefer explicit env var; in development fall back to local AI server
+    this.baseURL = process.env.ASTRO_API_URL || (process.env.NODE_ENV === 'development' ? 'http://localhost:8000' : 'https://astrolozee.onrender.com');
     this.apiKey = process.env.ASTRO_API_KEY || 'supersecret@123A$trolzee';
-    
+
     if (!this.apiKey) {
       throw new Error('ASTRO_API_KEY is not defined in environment variables');
     }
@@ -47,13 +48,14 @@ class KundliService {
         data: response.data
       };
     } catch (error) {
-      console.error('Error calling Kundli API:', error.message);
+  console.error('Error calling Kundli API:', error.message);
+  console.error(error.stack);
       
       if (error.response) {
         // API returned an error response
         return {
           success: false,
-          error: error.response.data?.detail || error.response.data || 'API request failed',
+          error: error.response.data || error.response.data?.detail || 'API request failed',
           statusCode: error.response.status
         };
       } else if (error.request) {
