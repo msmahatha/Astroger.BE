@@ -92,7 +92,7 @@
 // // class KundliService {
 // //   constructor() {
 // //     // Use the correct backend URL
-// //     this.baseURL = process.env.REACT_APP_ASTRO_API_URL || 'http://localhost:5000';
+// //     this.baseURL = process.env.REACT_APP_ASTRO_API_URL || 'https://demoastrobackend.onrender.com';
 // //     this.apiKey = process.env.REACT_APP_ASTRO_API_KEY || 'supersecret@123A$trolzee';
 
 // //     if (!this.apiKey) {
