@@ -372,7 +372,7 @@ import axios from 'axios';
 
 class KundliService {
   constructor() {
-    this.baseURL = process.env.ASTRO_API_URL || 'http://localhost:8000/';
+    this.baseURL = process.env.ASTRO_API_URL || 'https://demoai-bvod.onrender.com/';
     this.apiKey = process.env.ASTRO_API_KEY || 'supersecret@123A$trolzee';
 
     if (!this.apiKey) {
