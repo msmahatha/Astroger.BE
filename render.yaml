@@ -1,0 +1,24 @@
+services:
+  - type: web
+    name: astrolozee-backend
+    env: node
+    region: oregon
+    plan: free
+    branch: main
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: NODE_VERSION
+        value: 20.15.1
+      - key: MONGO_URI
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: ASTRO_API_URL
+        value: https://astroger2-0.onrender.com
+      - key: ASTRO_API_KEY
+        sync: false
+      - key: GOOGLE_API_KEY
+        sync: false
+      - key: PORT
+        value: "5000"
