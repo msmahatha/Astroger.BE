@@ -318,16 +318,31 @@
 
 import AstroQuestion from "../models/AstroQuestion.js"
 import astroRagService from "../services/astroRagService.js";
+import responseFormatter from "../services/responseFormatter.js";
+
+// Helper function to detect if user is asking for remedy
+const isRemedyRequest = (question) => {
+  const remedyKeywords = [
+    'remedy', 'remedies', 'solution', 'solutions', 'cure', 'cures', 'treatment',
+    'how to fix', 'what should i do', 'what to do', 'help me', 'help me with',
+    'how can i', 'what can i', 'suggestions', 'suggestion', 'advice', 'tips',
+    'totkay', 'upay', 'totke', 'upaay', 'mitigate', 'reduce', 'minimize'
+  ];
+  const lowerQuestion = question.toLowerCase();
+  return remedyKeywords.some(keyword => lowerQuestion.includes(keyword));
+};
 
 export const askQuestion = async (req, res) => {
   const startTime = Date.now();
   
   try {
-    const { question, context, ragWithContext, userInfo } = req.body;
+    const { question, context, ragWithContext, userInfo, user_name } = req.body;
 
     console.log('=== BACKEND RECEIVED ===');
     console.log('Question:', question);
     console.log('UserInfo:', userInfo);
+    console.log('User Name:', user_name);
+    console.log('Is Remedy Request:', isRemedyRequest(question));
     console.log('=====================');
 
     if (!question || question.trim() === '') {
@@ -338,6 +353,37 @@ export const askQuestion = async (req, res) => {
     }
 
     const userId = req.user?._id;
+
+    // Idempotency guard: if the same user recently asked the exact same question
+    // and we have a successful response, return it instead of processing again.
+    try {
+      const recent = await AstroQuestion.findOne({ userId, question: question.trim() }).sort({ createdAt: -1 });
+      if (recent && recent.status === 'success') {
+        const ageMs = Date.now() - new Date(recent.createdAt).getTime();
+        // If it was answered very recently (10 seconds), return cached result
+        if (ageMs < 10000) {
+          return res.status(200).json({
+            success: true,
+            data: {
+              questionId: recent._id,
+              question: recent.question,
+              category: recent.category,
+              answer: recent.answer,
+              remedy: recent.remedy || '',
+              retrievedSources: recent.retrievedSources || [],
+              responseTime: ageMs,
+              introMessage: recent.introMessage || '',
+              hasIntro: recent.hasIntro || false,
+              isSMSFormatted: false,
+              hasRemedy: !!recent.remedy
+            }
+          });
+        }
+      }
+    } catch (err) {
+      console.warn('Idempotency check failed:', err?.message || err);
+      // proceed normally if idempotency check errors
+    }
 
     // Create database record
     const astroQuestion = new AstroQuestion({
@@ -351,12 +397,50 @@ export const askQuestion = async (req, res) => {
 
     await astroQuestion.save();
 
-    // Call the service - it now handles both regular and intro messages
+    // Get all previous questions from this user for context preservation
+    const previousQuestions = await AstroQuestion.find({ userId })
+      .sort({ createdAt: -1 })
+      .limit(5) // Get last 5 questions for context
+      .select('question answer');
+
+    // Build context from conversation history
+    let conversationContext = '';
+    if (previousQuestions.length > 0) {
+      conversationContext = 'Previous conversation context (most recent first):\n';
+      previousQuestions.reverse().forEach((q, idx) => {
+        conversationContext += `Q${idx + 1}: ${q.question}\nA${idx + 1}: ${q.answer}\n\n`;
+      });
+      console.log('Added conversation context from', previousQuestions.length, 'previous questions');
+    }
+
+    // Combine conversation context with provided context
+    const finalContext = conversationContext + (context || '');
+
+    // Check if user is asking for remedy
+    const hasRemedyRequest = isRemedyRequest(question);
+
+    // Extract user's faith/belief system from userInfo if available
+    const userFaith = userInfo?.faith || userInfo?.belief || null;
+
+    // Normalize userInfo so AI receives coordinates when available
+    let normalizedUserInfo = userInfo || null;
+    if (normalizedUserInfo) {
+      normalizedUserInfo = { ...normalizedUserInfo };
+      // Prefer explicit birthLatitude/birthLongitude; fall back to common aliases
+      normalizedUserInfo.birthLatitude = normalizedUserInfo.birthLatitude ?? normalizedUserInfo.latitude ?? normalizedUserInfo.lat ?? normalizedUserInfo.coords?.lat ?? null;
+      normalizedUserInfo.birthLongitude = normalizedUserInfo.birthLongitude ?? normalizedUserInfo.longitude ?? normalizedUserInfo.lng ?? normalizedUserInfo.coords?.lng ?? normalizedUserInfo.coords?.lon ?? null;
+      // Keep birthPlace for fallback
+      normalizedUserInfo.birthPlace = normalizedUserInfo.birthPlace ?? normalizedUserInfo.place ?? normalizedUserInfo.location ?? '';
+    }
+
+    // Call the service with faith parameter; pass normalized user info (with coords if available)
     const result = await astroRagService.askQuestion(
       question.trim(),
-      context || '',
+      finalContext,
       ragWithContext !== false, // Default to true
-      userInfo // Pass userInfo to service for intro handling
+      normalizedUserInfo, // Pass normalized userInfo to service for intro handling
+      userFaith, // Pass faith for remedy lookup
+      user_name // Pass user name for greeting personalization
     );
 
     const responseTime = Date.now() - startTime;
@@ -387,13 +471,21 @@ export const askQuestion = async (req, res) => {
         questionId: astroQuestion._id,
         question: question.trim(),
         category: result.data.category,
+        // FIXED: Return FULL answer (no SMS truncation)
+        // Users want complete answers based on their questions
         answer: result.data.answer,
-        remedy: result.data.remedy,
+        // FIXED: Always include remedy from AI service
+        // Frontend can choose to display it or not
+        remedy: result.data.remedy || '',
         retrievedSources: result.data.retrieved_sources,
         responseTime,
         // Include intro data for frontend to handle display
         introMessage: result.data.introMessage || '',
-        hasIntro: result.data.hasIntro || false
+        hasIntro: result.data.hasIntro || false,
+        // FIXED: Flag shows SMS formatting disabled
+        isSMSFormatted: false,
+        // Flag: whether remedy is present
+        hasRemedy: !!result.data.remedy
       };
 
       return res.status(200).json({

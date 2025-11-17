@@ -611,12 +611,25 @@ export const generateKundli = async (req, res) => {
     }
 
     // Validate place name for better geocoding
-    if (place && place.length < 3) {
+    if (place && place.length < 2) {
       return res.status(400).json({
         success: false,
-        message: "Place name should be at least 3 characters long for accurate geocoding",
+        message: "Place name is too short",
       });
     }
+
+    // Simplify place name by extracting main city
+    const simplifyPlace = (placeStr) => {
+      if (!placeStr) return '';
+      const parts = placeStr.split(',').map(p => p.trim()).filter(p => p.length > 0);
+      // Use last 1-2 parts (usually city, state/country)
+      return parts.slice(Math.max(0, parts.length - 2)).join(', ');
+    };
+
+    const simplifiedPlace = place ? simplifyPlace(place) : null;
+    
+    console.log("📍 Original place:", place);
+    console.log("📍 Simplified place:", simplifiedPlace);
 
     // Gender validation
     const validGenders = ["Male", "Female", "Other"];
@@ -650,12 +663,12 @@ export const generateKundli = async (req, res) => {
     let source = "external_api";
     let externalError = null;
 
-    // Try external API first
+    // Try external API first (using simplified place name)
     const externalResult = await kundliService.generateKundli({
       name: name.trim(),
       birth_date,
       birth_time,
-      place: place?.trim(),
+      place: simplifiedPlace,
       latitude,
       longitude,
       gender,
@@ -681,7 +694,7 @@ export const generateKundli = async (req, res) => {
         name: name.trim(),
         birth_date,
         birth_time,
-        place: place?.trim(),
+        place: simplifiedPlace,
         latitude,
         longitude,
         gender,

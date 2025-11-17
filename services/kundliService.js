@@ -372,7 +372,7 @@ import axios from 'axios';
 
 class KundliService {
   constructor() {
-    this.baseURL = process.env.ASTRO_API_URL || 'https://astrolozee-ai-9q2f.onrender.com/';
+    this.baseURL = process.env.ASTRO_API_URL || 'http://localhost:8000';
     this.apiKey = process.env.ASTRO_API_KEY || 'supersecret@123A$trolzee';
 
     if (!this.apiKey) {
@@ -430,16 +430,26 @@ class KundliService {
         };
       }
 
+      // Simplify place name for better geocoding
+      const simplifyPlace = (placeStr) => {
+        if (!placeStr) return '';
+        // Extract just the main city/location, not the full address
+        const parts = placeStr.split(',').map(p => p.trim());
+        // Try to find a reasonable place name (usually 1-3 words)
+        const mainPlace = parts.filter(p => p.length > 0).slice(-2).join(', ');
+        return mainPlace || placeStr;
+      };
+
       // Build payload exactly as external API expects
       const payload = {
         name: name.trim(),
         birth_date,
         birth_time,
         gender: gender.toLowerCase(),
-        place: place || '',
+        place: simplifyPlace(place) || '',
       };
       
-      // Only add coordinates if provided
+      // IMPORTANT: Always include coordinates if available to avoid geocoding failures
       if (latitude != null && longitude != null) {
         payload.latitude = parseFloat(latitude);
         payload.longitude = parseFloat(longitude);

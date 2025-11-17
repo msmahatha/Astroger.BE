@@ -90,14 +90,22 @@ connectDB();
 const PORT = process.env.PORT || 5000;
 
 const corsOptions = {
-  origin: [
-    "https://astrolozee.com", 
-    "http://localhost:5173",
-    "http://localhost:3000",
-    "https://demoastroclient.vercel.app",
-  ],
+  origin: function (origin, callback) {
+    const allowedOrigins = [
+      "https://astrolozee.com",
+      "https://demoastroclient.vercel.app",
+    ];
+    // Allow localhost on any port for development
+    if (!origin || allowedOrigins.includes(origin) || origin.startsWith('http://localhost:')) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true,
   methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization", "Content-Length", "X-Requested-With", "Accept"],
+  optionsSuccessStatus: 200
 };
 
 app.use(cors(corsOptions));
