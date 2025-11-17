@@ -94,6 +94,7 @@ const corsOptions = {
     const allowedOrigins = [
       "https://astrolozee.com",
       "https://demoastroclient.vercel.app",
+      "https://astrologer2.netlify.app",
     ];
     // Allow localhost on any port for development
     if (!origin || allowedOrigins.includes(origin) || origin.startsWith('http://localhost:')) {
