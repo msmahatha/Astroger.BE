@@ -422,7 +422,7 @@ export const askQuestion = async (req, res) => {
     // Extract user's faith/belief system from userInfo if available
     const userFaith = userInfo?.faith || userInfo?.belief || null;
 
-    // Normalize userInfo so AI receives coordinates when available
+    // Normalize userInfo so AI receives coordinates, religion, and language when available
     let normalizedUserInfo = userInfo || null;
     if (normalizedUserInfo) {
       normalizedUserInfo = { ...normalizedUserInfo };
@@ -431,6 +431,10 @@ export const askQuestion = async (req, res) => {
       normalizedUserInfo.birthLongitude = normalizedUserInfo.birthLongitude ?? normalizedUserInfo.longitude ?? normalizedUserInfo.lng ?? normalizedUserInfo.coords?.lng ?? normalizedUserInfo.coords?.lon ?? null;
       // Keep birthPlace for fallback
       normalizedUserInfo.birthPlace = normalizedUserInfo.birthPlace ?? normalizedUserInfo.place ?? normalizedUserInfo.location ?? '';
+      // Normalize religion/faith
+      normalizedUserInfo.faith = normalizedUserInfo.faith ?? normalizedUserInfo.religion ?? normalizedUserInfo.belief ?? null;
+      // Normalize language
+      normalizedUserInfo.language = normalizedUserInfo.language ?? normalizedUserInfo.lang ?? null;
     }
 
     // Call the service with faith parameter; pass normalized user info (with coords if available)
