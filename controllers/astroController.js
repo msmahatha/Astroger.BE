@@ -143,7 +143,10 @@ export const askQuestion = async (req, res) => {
     const hasRemedyRequest = isRemedyRequest(question);
 
     // Extract user's faith/belief system from userInfo if available
-    const userFaith = userInfo?.faith || userInfo?.belief || null;
+    const userFaith = userInfo?.faith || userInfo?.belief || userInfo?.religion || null;
+
+    // Extract user's preferred language from userInfo
+    const userLanguage = userInfo?.language || userInfo?.preferredLanguage || null;
 
     // Ensure user name is available for greeting
     const effectiveUserName = user_name || userInfo?.name || null;
@@ -159,13 +162,14 @@ export const askQuestion = async (req, res) => {
       normalizedUserInfo.birthPlace = normalizedUserInfo.birthPlace ?? normalizedUserInfo.place ?? normalizedUserInfo.location ?? '';
     }
 
-    // Call the service with faith parameter; pass normalized user info (with coords if available)
+    // Call the service with faith and language parameters
     const result = await astroRagService.askQuestion(
       question.trim(),
       finalContext,
       ragWithContext !== false, // Default to true
       normalizedUserInfo, // Pass normalized userInfo to service for intro handling
-      userFaith, // Pass faith for remedy lookup
+      userFaith, // Pass faith for remedy lookup and religion-based greetings
+      userLanguage, // Pass language for multilingual responses
       effectiveUserName // Pass user name for greeting personalization
     );
 
