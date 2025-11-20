@@ -573,7 +573,7 @@ class AstroRagService {
     return remedyKeywords.some(keyword => lowerQuestion.includes(keyword));
   }
 
-  async askQuestion(question, context = '', ragWithContext = false, userInfo = null, userFaith = null, user_name = null) {
+  async askQuestion(question, context = '', ragWithContext = false, userInfo = null, userReligion = null, userLanguage = null, user_name = null) {
     try {
       let finalQuestion = question;
       let finalContext = context;
@@ -600,6 +600,8 @@ class AstroRagService {
           `- Birth Date: ${userInfo.birthDate}\n` +
           `- Birth Time: ${this.formatTimeForDisplay(userInfo.birthTime)}\n` +
           (birthLat && birthLon ? `- Birth Coordinates: ${birthLat}, ${birthLon}\n` : `- Birth Place: ${birthPlace}\n`) +
+          (userReligion ? `- Religion: ${userReligion}\n` : (userInfo.religion ? `- Religion: ${userInfo.religion}\n` : '')) +
+          (userLanguage ? `- Preferred Language: ${userLanguage}\n` : (userInfo.language ? `- Preferred Language: ${userInfo.language}\n` : '')) +
           `\nPlease provide specific astrological insights based on this user's birth details when answering their questions.`;
 
         finalContext = finalContext ? `${userInfoContext}\n\n${finalContext}` : userInfoContext;
@@ -614,7 +616,9 @@ class AstroRagService {
           birthTime: userInfo.birthTime,
           birthPlace: birthPlace,
           birthLatitude: birthLat,
-          birthLongitude: birthLon
+          birthLongitude: birthLon,
+          religion: userInfo.religion || userReligion || '',
+          language: userInfo.language || userLanguage || ''
         };
       }
 
@@ -633,7 +637,9 @@ class AstroRagService {
         context: finalContext,
         rag_with_context: ragWithContext !== false, // Default to true if not specified
         includeRemedy: isRemedy, // Pass flag to backend
-        user_name: user_name // Pass user name for greeting personalization
+        user_name: user_name, // Pass user name for greeting personalization
+        language: userLanguage || (userInfo && userInfo.language) || undefined,
+        religion: userReligion || (userInfo && userInfo.religion) || undefined
       };
 
       // If normalized user info (including coords) is available, attach it as structured data

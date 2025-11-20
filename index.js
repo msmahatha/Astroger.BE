@@ -180,6 +180,37 @@ app.post("/api/reverse-geocode", async (req, res) => {
   }
 });
 
+// Geocode by address (backend proxy) - returns coordinates for a given address string
+app.post("/api/geocode", async (req, res) => {
+  try {
+    const { address } = req.body;
+
+    if (!address) {
+      return res.status(400).json({
+        status: 'ERROR',
+        message: 'Address is required'
+      });
+    }
+
+    const GOOGLE_API_KEY = process.env.GOOGLE_API_KEY || 'AIzaSyAoBl7NNCqtw_7g9K7bWrPq1m3ZI6P2_g8';
+
+    const response = await fetch(
+      `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(address)}&key=${GOOGLE_API_KEY}`
+    );
+
+    const data = await response.json();
+
+    res.json(data);
+  } catch (error) {
+    console.error('Geocode API error:', error);
+    res.status(500).json({ 
+      status: 'ERROR',
+      message: 'Internal server error',
+      error: error.message 
+    });
+  }
+});
+
 // Routes
 import astrologyRoutes from "./routes/astrologyRoutes.js";
 app.use("/api/auth", authRoutes);

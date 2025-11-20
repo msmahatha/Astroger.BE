@@ -81,7 +81,6 @@ const astroQuestionSchema = new mongoose.Schema({
     type: Boolean,
     default: false
   },
-  // Add userInfo field to store user details
   userInfo: {
     name: {
       type: String,
@@ -108,6 +107,15 @@ const astroQuestionSchema = new mongoose.Schema({
       default: ''
     },
     displayBirthDate: {
+      type: String,
+      default: ''
+    }
+    ,
+    religion: {
+      type: String,
+      default: ''
+    },
+    language: {
       type: String,
       default: ''
     }
