@@ -73,8 +73,8 @@
 
 
 
+import 'dotenv/config';
 import express from "express";
-import dotenv from "dotenv";
 import connectDB from "./db/connectdb.js";
 import authRoutes from "./routes/authRoutes.js";
 import astroRoutes from "./routes/astroRoutes.js";
@@ -83,8 +83,6 @@ import cookieParser from "cookie-parser";
 import cors from "cors";
 
 const app = express();
-
-dotenv.config();
 connectDB();
 
 const PORT = process.env.PORT || 5000;
@@ -183,9 +181,11 @@ app.post("/api/reverse-geocode", async (req, res) => {
 });
 
 // Routes
+import astrologyRoutes from "./routes/astrologyRoutes.js";
 app.use("/api/auth", authRoutes);
 app.use("/api/astro", astroRoutes);
 app.use("/api/kundli", kundliRoutes);
+app.use("/api/astrology", astrologyRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {
